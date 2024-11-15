@@ -65,11 +65,11 @@ async def handle_grow_and_garden(session, refresh_token):
 
     info_query = {
         "query": "query getCurrentUser { "
-                    "currentUser { id totalPoint depositCount } "
-                    "getGardenForCurrentUser { "
-                    "gardenStatus { growActionCount gardenRewardActionCount } "
-                    "} "
-                    "}",
+                  "currentUser { id totalPoint depositCount } "
+                  "getGardenForCurrentUser { "
+                  "gardenStatus { growActionCount gardenRewardActionCount } "
+                  "} "
+                  "}",
         "operationName": "getCurrentUser"
     }
     info = await colay(session, api_url, 'POST', info_query)
@@ -82,16 +82,27 @@ async def handle_grow_and_garden(session, refresh_token):
     print(f"{Fore.GREEN}POINTS: {balance} | Deposit Counts: {deposit} | Grow left: {grow} | Garden left: {garden}{Style.RESET_ALL}")
 
     async def grow_action():
-        action_query = {
-            "query": "mutation issueGrowAction { issueGrowAction commitGrowAction }",
-            "operationName": "issueGrowAction"
-        }
+        grow_action_query = {
+              "query": """
+                  mutation executeGrowAction {
+                      executeGrowAction(withAll: true) {
+                          totalValue
+                          multiplyRate
+                      }
+                      executeSnsShare(actionType: GROW, snsType: X) {
+                          bonus
+                      }
+                  }
+              """,
+              "operationName": "executeGrowAction"
+          }
+
                         
         try:
-            mine = await colay(session, api_url, 'POST', action_query)            
+            mine = await colay(session, api_url, 'POST', grow_action_query)            
             
-            if mine and 'data' in mine and 'issueGrowAction' in mine['data']:
-                reward = mine['data']['issueGrowAction']
+            if mine and 'data' in mine and 'executeGrowAction' in mine['data']:
+                reward = mine['data']['executeGrowAction']['totalValue']
                 return reward
             else:
                 print(f"{Fore.RED}Error: Unexpected response format: {mine}{Style.RESET_ALL}")
@@ -100,17 +111,15 @@ async def handle_grow_and_garden(session, refresh_token):
             #print(f"{Fore.RED}Error during grow action: {str(e)}{Style.RESET_ALL}")
             return 0
 
-    while grow > 0:
+    if grow > 0:
+        
+        reward = await grow_action()
 
-        grow_count = min(grow, 10)
-        tasks = [grow_action() for _ in range(grow_count)]
-        results = await asyncio.gather(*tasks)
-
-        for reward in results:
-            if reward != 0:
-                balance += reward
-                grow -= 1
-                print(f"{Fore.GREEN}Rewards: {reward} | Balance: {balance} | Grow left: {grow}{Style.RESET_ALL}")
+        if reward:            
+            balance += reward
+            grow = 0
+            print(f"{Fore.GREEN}Rewards: {reward} | Balance: {balance} | Grow left: {grow}{Style.RESET_ALL}")
+              
         
     while garden >= 10:
         garden_action_query = {
@@ -153,6 +162,12 @@ async def handle_eth_transactions(session, num_transactions):
 
             except Exception as e:
                 if 'nonce too low' in str(e):
+                    print(f"{Fore.RED}Nonce too low for {short_from_address}. Fetching the latest nonce...{Style.RESET_ALL}")
+                    nonces[private_key] = web3.eth.get_transaction_count(from_address)
+                elif 'already known' in str(e):
+                    print(f"{Fore.RED}Nonce too low for {short_from_address}. Fetching the latest nonce...{Style.RESET_ALL}")
+                    nonces[private_key] = web3.eth.get_transaction_count(from_address)
+                elif 'replacement transaction underpriced' in str(e):
                     print(f"{Fore.RED}Nonce too low for {short_from_address}. Fetching the latest nonce...{Style.RESET_ALL}")
                     nonces[private_key] = web3.eth.get_transaction_count(from_address)
                 else:
