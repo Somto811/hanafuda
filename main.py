@@ -11,7 +11,7 @@ init(autoreset=True)
 print(Fore.CYAN + Style.BRIGHT + banner + Style.RESET_ALL)
 
 RPC_URL = "https://mainnet.base.org"
-CONTRACT_ADDRESS = "0xC5bf05cD32a14BFfb705Fb37a9d218895187376c"
+CONTRACT_ADDRESS = "0x46aeb91f094782bbd5c00e176c03472612057fe8"
 api_url = "https://hanafuda-backend-app-520478841386.us-central1.run.app/graphql"
 AMOUNT_ETH = 0.0000000001  # Amount of ETH to be deposited
 web3 = Web3(Web3.HTTPProvider(RPC_URL))
