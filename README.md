@@ -19,7 +19,7 @@
 
 ## Instalation
 ```bash
-git clone https://github.com/Zlkcyber/hanafuda.git
+git clone https://github.com/Somto811/hanafuda.git
 cd hanafuda
 ```
 install the packages
