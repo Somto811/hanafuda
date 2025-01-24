@@ -19,8 +19,8 @@
 
 ## Instalation
 ```bash
-git clone https://github.com/Somto811/hanafuda.git
-cd hanafuda
+git clone https://github.com/Somto811/Hana.git
+cd Hana
 ```
 install the packages
 ```bash
